@@ -1,0 +1,73 @@
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local player = Players.LocalPlayer
+
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "OverlayHUD"
+screenGui.ResetOnSpawn = false
+screenGui.DisplayOrder = 999
+pcall(function()
+    screenGui.Parent = game:GetService("CoreGui")
+end)
+
+local textLabel = Instance.new("TextLabel")
+textLabel.Parent = screenGui
+textLabel.Size = UDim2.new(0.85, 0, 0.25, 0) -- to hơn
+textLabel.Position = UDim2.new(0.075, 0, 0.7, 0) -- giữa màn hình dọc
+textLabel.Font = Enum.Font.FredokaOne
+textLabel.TextScaled = true
+textLabel.BackgroundTransparency = 1
+textLabel.TextStrokeTransparency = 0.3
+textLabel.TextStrokeColor3 = Color3.new(0, 0, 0)
+textLabel.TextColor3 = Color3.new(1, 1, 1) -- màu trắng
+textLabel.TextXAlignment = Enum.TextXAlignment.Center
+textLabel.TextYAlignment = Enum.TextYAlignment.Center
+
+local function getFragment()
+    local frag = "?"
+    local paths = {
+        {"Data", "Fragment"},
+        {"Data", "Fragments"},
+        {"leaderstats", "Fragment"},
+        {"leaderstats", "Fragments"},
+        {"leaderstats", "F"},
+        {"Stats", "Fragments"},
+    }
+
+    for _, path in pairs(paths) do
+        local root = player:FindFirstChild(path[1])
+        if root and root:FindFirstChild(path[2]) then
+            local success, value = pcall(function()
+                return root[path[2]].Value
+            end)
+            if success then
+                frag = value
+                break
+            end
+        end
+    end
+    return frag
+end
+
+task.spawn(function()
+    while true do
+        local fps = math.floor(1 / RunService.RenderStepped:Wait())
+        local name = player.Name
+        local beli, level = "?", "?"
+
+        if player:FindFirstChild("Data") then
+            local data = player.Data
+            if data:FindFirstChild("Beli") then
+                beli = data.Beli.Value
+            end
+            if data:FindFirstChild("Level") then
+                level = data.Level.Value
+            end
+        end
+
+        local fragment = getFragment()
+
+        textLabel.Text = string.format("FPS: %d   |   Lv: %s\n$: %s   |   F: %s\nUser: %s", fps, level, beli, fragment, name)
+        task.wait(1)
+    end
+end)
