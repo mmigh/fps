@@ -1,113 +1,109 @@
---// Roblox Player Counter UI - Gradient Border (Green -> Yellow -> Orange -> Red)
 local Players = game:GetService("Players")
-local CoreGui = game:GetService("CoreGui")
 local TweenService = game:GetService("TweenService")
 
--- Xóa UI cũ nếu có
-if CoreGui:FindFirstChild("PlayerCounterUI") then
-    CoreGui.PlayerCounterUI:Destroy()
-end
+-- GUI chính
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "PlayerCountDisplay"
+screenGui.ResetOnSpawn = false
+screenGui.Parent = Players.LocalPlayer:WaitForChild("PlayerGui")
 
--- Tạo GUI
-local gui = Instance.new("ScreenGui")
-gui.Name = "PlayerCounterUI"
-gui.IgnoreGuiInset = true
-gui.ResetOnSpawn = false
-gui.Parent = CoreGui
-
--- Khung chính
+-- Frame chính
 local frame = Instance.new("Frame")
-frame.Size = UDim2.new(0, 95, 0, 32)
-frame.Position = UDim2.new(0.5, -47, 0.05, 0)
-frame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
-frame.BackgroundTransparency = 0.1
-frame.BorderSizePixel = 0
-frame.Parent = gui
+frame.Size = UDim2.new(0, 90, 0, 28)
+frame.Position = UDim2.new(0.5, 0, 0.05, 0)
+frame.AnchorPoint = Vector2.new(0.5, 0)
+frame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+frame.BackgroundTransparency = 0.3
+frame.ZIndex = 2
+frame.Parent = screenGui
 
--- Bo góc
-local corner = Instance.new("UICorner")
-corner.CornerRadius = UDim.new(0, 6)
-corner.Parent = frame
+-- Bo góc & viền
+local corner = Instance.new("UICorner", frame)
+corner.CornerRadius = UDim.new(0, 8)
 
--- Viền (UIStroke)
-local stroke = Instance.new("UIStroke")
-stroke.Thickness = 2
-stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-stroke.Color = Color3.fromRGB(46, 204, 113) -- xanh lá ban đầu
-stroke.Parent = frame
+local stroke = Instance.new("UIStroke", frame)
+stroke.Thickness = 1.8
+stroke.Color = Color3.fromRGB(0, 255, 0)
+stroke.Transparency = 0.25
 
--- Icon người
-local icon = Instance.new("ImageLabel")
-icon.BackgroundTransparency = 1
-icon.Size = UDim2.new(0, 20, 0, 20)
-icon.Position = UDim2.new(0, 6, 0.5, -10)
-icon.Image = "rbxassetid://6035047409"
-icon.ImageColor3 = Color3.fromRGB(0, 162, 255)
-icon.Parent = frame
+-- Hiệu ứng glow mờ
+local glow = Instance.new("ImageLabel", frame)
+glow.BackgroundTransparency = 1
+glow.Image = "rbxassetid://4996891970" -- hiệu ứng phát sáng
+glow.ImageColor3 = stroke.Color
+glow.ImageTransparency = 0.6
+glow.ScaleType = Enum.ScaleType.Slice
+glow.SliceCenter = Rect.new(24, 24, 276, 276)
+glow.Size = UDim2.new(1, 16, 1, 16)
+glow.Position = UDim2.new(0.5, 0, 0.5, 0)
+glow.AnchorPoint = Vector2.new(0.5, 0.5)
+glow.ZIndex = 0
 
--- Text hiển thị số người
-local text = Instance.new("TextLabel")
-text.BackgroundTransparency = 1
-text.Size = UDim2.new(1, -30, 1, 0)
-text.Position = UDim2.new(0, 30, 0, 0)
-text.Font = Enum.Font.GothamBold
-text.TextColor3 = Color3.fromRGB(255, 255, 255)
-text.TextSize = 20
-text.TextXAlignment = Enum.TextXAlignment.Left
-text.Text = "0/12"
-text.Parent = frame
+-- Text hiển thị
+local countLabel = Instance.new("TextLabel", frame)
+countLabel.BackgroundTransparency = 1
+countLabel.Size = UDim2.new(1, 0, 1, 0)
+countLabel.Font = Enum.Font.GothamBold
+countLabel.TextScaled = true
+countLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+countLabel.Text = "0/0"
+countLabel.ZIndex = 2
 
--- Hàm nội suy màu (linear blend)
-local function LerpColor(c1, c2, t)
-	return Color3.new(
-		c1.R + (c2.R - c1.R) * t,
-		c1.G + (c2.G - c1.G) * t,
-		c1.B + (c2.B - c1.B) * t
-	)
-end
+local padding = Instance.new("UIPadding", countLabel)
+padding.PaddingTop = UDim.new(0, 2)
 
--- Màu chuyển tiếp: xanh → vàng → cam → đỏ
-local colorPoints = {
-	{percent = 0.0, color = Color3.fromRGB(46, 204, 113)}, -- xanh lá
-	{percent = 0.33, color = Color3.fromRGB(241, 196, 15)}, -- vàng
-	{percent = 0.66, color = Color3.fromRGB(255, 140, 0)},  -- cam
-	{percent = 1.0, color = Color3.fromRGB(231, 76, 60)}    -- đỏ
-}
+local textConstraint = Instance.new("UITextSizeConstraint", countLabel)
+textConstraint.MaxTextSize = 16
+textConstraint.MinTextSize = 9
 
--- Lấy màu theo tỉ lệ
-local function getGradientColor(ratio)
-	for i = 1, #colorPoints - 1 do
-		local c1, c2 = colorPoints[i], colorPoints[i + 1]
-		if ratio >= c1.percent and ratio <= c2.percent then
-			local t = (ratio - c1.percent) / (c2.percent - c1.percent)
-			return LerpColor(c1.color, c2.color, t)
-		end
+-- Hiệu ứng fade-in khi load
+frame.BackgroundTransparency = 1
+countLabel.TextTransparency = 1
+stroke.Transparency = 1
+glow.ImageTransparency = 1
+
+TweenService:Create(frame, TweenInfo.new(0.5, Enum.EasingStyle.Quad), {BackgroundTransparency = 0.3}):Play()
+TweenService:Create(countLabel, TweenInfo.new(0.6, Enum.EasingStyle.Quad), {TextTransparency = 0}):Play()
+TweenService:Create(stroke, TweenInfo.new(0.6, Enum.EasingStyle.Quad), {Transparency = 0.25}):Play()
+TweenService:Create(glow, TweenInfo.new(0.6, Enum.EasingStyle.Quad), {ImageTransparency = 0.6}):Play()
+
+-- Hàm đổi màu viền theo tỉ lệ
+local function getColor(ratio)
+	local green = Color3.fromRGB(0, 255, 0)
+	local yellow = Color3.fromRGB(255, 255, 0)
+	local orange = Color3.fromRGB(255, 170, 0)
+	local red = Color3.fromRGB(255, 0, 0)
+
+	if ratio <= 0.33 then
+		return green:lerp(yellow, ratio / 0.33)
+	elseif ratio <= 0.66 then
+		return yellow:lerp(orange, (ratio - 0.33) / 0.33)
+	else
+		return orange:lerp(red, (ratio - 0.66) / 0.34)
 	end
-	return colorPoints[#colorPoints].color
 end
 
 -- Cập nhật UI
-local function update()
-	local current = #Players:GetPlayers()
-	local max = 12
-	text.Text = string.format("%d/%d", current, max)
+local function updateUI()
+	local currentPlayers = #Players:GetPlayers()
+	local maxPlayers = Players.MaxPlayers or 12
+	local ratio = math.clamp(currentPlayers / maxPlayers, 0, 1)
+	local color = getColor(ratio)
 
-	local ratio = math.clamp(current / max, 0, 1)
-	local newColor = getGradientColor(ratio)
+	countLabel.Text = string.format("%d/%d", currentPlayers, maxPlayers)
 
-	TweenService:Create(stroke, TweenInfo.new(0.4, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {
-		Color = newColor
-	}):Play()
+	TweenService:Create(stroke, TweenInfo.new(0.4, Enum.EasingStyle.Quad), {Color = color}):Play()
+	TweenService:Create(glow, TweenInfo.new(0.4, Enum.EasingStyle.Quad), {ImageColor3 = color}):Play()
 end
 
--- Kết nối sự kiện
-update()
-Players.PlayerAdded:Connect(update)
-Players.PlayerRemoving:Connect(update)
-
--- Auto update mỗi 5s
+-- Auto update mỗi 5s và khi player thay đổi
 task.spawn(function()
 	while task.wait(5) do
-		update()
+		updateUI()
 	end
 end)
+
+Players.PlayerAdded:Connect(updateUI)
+Players.PlayerRemoving:Connect(updateUI)
+
+updateUI()
