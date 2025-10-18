@@ -1,109 +1,111 @@
 local Players = game:GetService("Players")
-local TweenService = game:GetService("TweenService")
+local LocalPlayer = Players.LocalPlayer
+local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
 
--- GUI chính
+-- CONFIG
+local MAX_PLAYERS = Players.MaxPlayers
+
+-- COLORS
+local COLORS = {
+	Green = Color3.fromRGB(0, 255, 0),
+	Yellow = Color3.fromRGB(255, 255, 0),
+	Orange = Color3.fromRGB(255, 170, 0),
+	Red = Color3.fromRGB(255, 0, 0),
+}
+
+-- GUI CONTAINER
 local screenGui = Instance.new("ScreenGui")
 screenGui.Name = "PlayerCountDisplay"
+screenGui.IgnoreGuiInset = true
 screenGui.ResetOnSpawn = false
-screenGui.Parent = Players.LocalPlayer:WaitForChild("PlayerGui")
+screenGui.Parent = PlayerGui
 
--- Frame chính
+-- FRAME (HUD BAR)
 local frame = Instance.new("Frame")
-frame.Size = UDim2.new(0, 90, 0, 28)
-frame.Position = UDim2.new(0.5, 0, 0.05, 0)
+frame.Size = UDim2.fromOffset(100, 28)
+frame.Position = UDim2.new(0.5, 0, 0, 30) -- 🎯 Slightly below the top bar
 frame.AnchorPoint = Vector2.new(0.5, 0)
-frame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-frame.BackgroundTransparency = 0.3
-frame.ZIndex = 2
+frame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+frame.BackgroundTransparency = 0.2
 frame.Parent = screenGui
+frame.ZIndex = 5
 
--- Bo góc & viền
-local corner = Instance.new("UICorner", frame)
-corner.CornerRadius = UDim.new(0, 8)
+Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 6)
 
-local stroke = Instance.new("UIStroke", frame)
-stroke.Thickness = 1.8
-stroke.Color = Color3.fromRGB(0, 255, 0)
-stroke.Transparency = 0.25
+local stroke = Instance.new("UIStroke")
+stroke.Thickness = 2
+stroke.Color = COLORS.Green
+stroke.Transparency = 0.2
+stroke.Parent = frame
 
--- Hiệu ứng glow mờ
-local glow = Instance.new("ImageLabel", frame)
+-- GLOW (Subtle light)
+local glow = Instance.new("ImageLabel")
 glow.BackgroundTransparency = 1
-glow.Image = "rbxassetid://4996891970" -- hiệu ứng phát sáng
-glow.ImageColor3 = stroke.Color
+glow.Image = "rbxassetid://4996891970"
+glow.ImageColor3 = COLORS.Green
 glow.ImageTransparency = 0.6
 glow.ScaleType = Enum.ScaleType.Slice
 glow.SliceCenter = Rect.new(24, 24, 276, 276)
-glow.Size = UDim2.new(1, 16, 1, 16)
-glow.Position = UDim2.new(0.5, 0, 0.5, 0)
+glow.Size = UDim2.new(1, 12, 1, 12)
+glow.Position = UDim2.fromScale(0.5, 0.5)
 glow.AnchorPoint = Vector2.new(0.5, 0.5)
-glow.ZIndex = 0
+glow.ZIndex = 4
+glow.Parent = frame
 
--- Text hiển thị
-local countLabel = Instance.new("TextLabel", frame)
+-- 👥 ICON
+local icon = Instance.new("TextLabel")
+icon.BackgroundTransparency = 1
+icon.Size = UDim2.new(0.4, 0, 1, 0)
+icon.Font = Enum.Font.GothamBold
+icon.Text = "👥"
+icon.TextScaled = true
+icon.TextColor3 = Color3.new(1, 1, 1)
+icon.ZIndex = 6
+icon.Parent = frame
+
+local iconConstraint = Instance.new("UITextSizeConstraint", icon)
+iconConstraint.MaxTextSize = 18
+
+-- PLAYER COUNT TEXT
+local countLabel = Instance.new("TextLabel")
 countLabel.BackgroundTransparency = 1
-countLabel.Size = UDim2.new(1, 0, 1, 0)
+countLabel.Size = UDim2.new(0.6, -4, 1, 0)
+countLabel.Position = UDim2.new(0.4, 0, 0, 0)
 countLabel.Font = Enum.Font.GothamBold
 countLabel.TextScaled = true
-countLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-countLabel.Text = "0/0"
-countLabel.ZIndex = 2
-
-local padding = Instance.new("UIPadding", countLabel)
-padding.PaddingTop = UDim.new(0, 2)
+countLabel.TextColor3 = Color3.new(1, 1, 1)
+countLabel.Text = "0/" .. MAX_PLAYERS
+countLabel.ZIndex = 6
+countLabel.Parent = frame
 
 local textConstraint = Instance.new("UITextSizeConstraint", countLabel)
 textConstraint.MaxTextSize = 16
-textConstraint.MinTextSize = 9
 
--- Hiệu ứng fade-in khi load
-frame.BackgroundTransparency = 1
-countLabel.TextTransparency = 1
-stroke.Transparency = 1
-glow.ImageTransparency = 1
-
-TweenService:Create(frame, TweenInfo.new(0.5, Enum.EasingStyle.Quad), {BackgroundTransparency = 0.3}):Play()
-TweenService:Create(countLabel, TweenInfo.new(0.6, Enum.EasingStyle.Quad), {TextTransparency = 0}):Play()
-TweenService:Create(stroke, TweenInfo.new(0.6, Enum.EasingStyle.Quad), {Transparency = 0.25}):Play()
-TweenService:Create(glow, TweenInfo.new(0.6, Enum.EasingStyle.Quad), {ImageTransparency = 0.6}):Play()
-
--- Hàm đổi màu viền theo tỉ lệ
+-- COLOR FUNCTION
 local function getColor(ratio)
-	local green = Color3.fromRGB(0, 255, 0)
-	local yellow = Color3.fromRGB(255, 255, 0)
-	local orange = Color3.fromRGB(255, 170, 0)
-	local red = Color3.fromRGB(255, 0, 0)
-
 	if ratio <= 0.33 then
-		return green:lerp(yellow, ratio / 0.33)
+		return COLORS.Green:Lerp(COLORS.Yellow, ratio / 0.33)
 	elseif ratio <= 0.66 then
-		return yellow:lerp(orange, (ratio - 0.33) / 0.33)
+		return COLORS.Yellow:Lerp(COLORS.Orange, (ratio - 0.33) / 0.33)
 	else
-		return orange:lerp(red, (ratio - 0.66) / 0.34)
+		return COLORS.Orange:Lerp(COLORS.Red, (ratio - 0.66) / 0.34)
 	end
 end
 
--- Cập nhật UI
+-- UPDATE FUNCTION
 local function updateUI()
 	local currentPlayers = #Players:GetPlayers()
-	local maxPlayers = Players.MaxPlayers or 12
-	local ratio = math.clamp(currentPlayers / maxPlayers, 0, 1)
+	local ratio = math.clamp(currentPlayers / MAX_PLAYERS, 0, 1)
 	local color = getColor(ratio)
 
-	countLabel.Text = string.format("%d/%d", currentPlayers, maxPlayers)
-
-	TweenService:Create(stroke, TweenInfo.new(0.4, Enum.EasingStyle.Quad), {Color = color}):Play()
-	TweenService:Create(glow, TweenInfo.new(0.4, Enum.EasingStyle.Quad), {ImageColor3 = color}):Play()
+	countLabel.Text = string.format("%d/%d", currentPlayers, MAX_PLAYERS)
+	stroke.Color = color
+	glow.ImageColor3 = color
 end
 
--- Auto update mỗi 5s và khi player thay đổi
-task.spawn(function()
-	while task.wait(5) do
-		updateUI()
-	end
-end)
-
+-- REAL-TIME EVENTS
 Players.PlayerAdded:Connect(updateUI)
 Players.PlayerRemoving:Connect(updateUI)
 
+-- INITIAL UPDATE
 updateUI()
