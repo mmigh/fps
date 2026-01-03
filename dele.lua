@@ -1,105 +1,99 @@
-Akicho = function()
-    for i,v in next, workspace:GetDescendants() do
-        pcall(function()
-            v.Transparency = 1
-        end)
-    end
-    task.wait(1)
-    workspace.DescendantAdded:Connect(function(v)
-        pcall(function()
-            v.Transparency = 1
-        end)
-    end)
-    task.wait(1)
-    workspace.ClientAnimatorThrottling = Enum.ClientAnimatorThrottlingMode.Enabled
-    workspace.InterpolationThrottling = Enum.InterpolationThrottlingMode.Enabled
-    settings():GetService("RenderSettings").EagerBulkExecution = false
-    workspace.LevelOfDetail = Enum.ModelLevelOfDetail.Disabled
-    game:GetService("Lighting").GlobalShadows = false
-    settings().Rendering.QualityLevel = "Level01"
-    task.wait(1)
-    local g = game
-    local w = g.Workspace
-    local l = g.Lighting
-    local t = w.Terrain
-    task.wait(1)
-    t.WaterWaveSize = 0
-    t.WaterWaveSpeed = 0
-    t.WaterReflectance = 0
-    t.WaterTransparency = 0
-    l.GlobalShadows = false
-    l.FogEnd = 9e9
-    l.Brightness = 0
-    task.wait(.5)
-    for i, v in pairs(g:GetDescendants()) do
-        if v.ClassName == "WedgePart" or v.ClassName == "Terrain" or v.ClassName == "MeshPart" then
-            v.BrickColor = BrickColor.new(155, 155, 155)
-            v.Material = "Plastic"
-            v.Transparency = 1
-        end
-        task.wait(.5)
-        if v:IsA("Part") or v:IsA("Union") or v:IsA("CornerWedgePart") or v:IsA("TrussPart") then 
-            v.Material = "Plastic"
-            v.Reflectance = 0
-        elseif v:IsA("Decal") or v:IsA("Texture") then
-            task.wait(.5)
-            v.Transparency = 1
-        elseif v:IsA("ParticleEmitter") or v:IsA("Trail") then
-            task.wait(.5)
-            v.Lifetime = NumberRange.new(0)
-        elseif v:IsA("Explosion") then
-            v.BlastPressure = 1
-            v.BlastRadius = 1
-            task.wait(.5)
-        elseif v:IsA("Fire") or v:IsA("SpotLight") or v:IsA("Smoke") or v:IsA("Sparkles") then
-            task.wait(.1)
-            v.Enabled = false
-        elseif v:IsA("MeshPart") then
-            v.Material = "Plastic"
-            v.Reflectance = 0
-            v.TextureID = 10385902758728957
-            task.wait(.5)
-        end
-    end
+-- ============ AFK EXTREME OPTIMIZED ============
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local Workspace = game:GetService("Workspace")
+local Lighting = game:GetService("Lighting")
+local RunService = game:GetService("RunService")
+local Terrain = Workspace.Terrain
 
-    game.Workspace.ChildAdded:Connect(function(v)
-        if v.ClassName == "WedgePart" or v.ClassName == "Terrain" or v.ClassName == "MeshPart" then
-            v.BrickColor = BrickColor.new(155, 155, 155)
-            v.Material = "Plastic"
-            v.Transparency = 1
-        end
-        task.wait(.2)
-        if v:IsA("Part") or v:IsA("Union") or v:IsA("CornerWedgePart") or v:IsA("TrussPart") then 
-            v.Material = "Plastic"
-            v.Reflectance = 0
-            task.wait(1)
-        elseif v:IsA("Decal") or v:IsA("Texture") then
-            v.Transparency = 1
-        elseif v:IsA("ParticleEmitter") or v:IsA("Trail") then
-            v.Lifetime = NumberRange.new(0)
-        elseif v:IsA("Explosion") then
-            v.BlastPressure = 1
-            v.BlastRadius = 1
-        elseif v:IsA("Fire") or v:IsA("SpotLight") or v:IsA("Smoke") or v:IsA("Sparkles") then
-            v.Enabled = false
-        elseif v:IsA("MeshPart") then
-            v.Material = "Plastic"
-            v.Reflectance = 0
-            v.TextureID = 10385902758728957
-            task.wait(.5)
-        end
-    end)
+-- ===== FPS LOCK =====
+pcall(function()
+    setfpscap(10) -- hoặc setfps(10)
+end)
 
-    for i, e in pairs(l:GetChildren()) do
-        if e:IsA("SunRaysEffect") or e:IsA("ColorCorrectionEffect") or e:IsA("BloomEffect") or e:IsA("DepthOfFieldEffect") then
-            e.Enabled = false
-        end
+-- ===== TẮT RENDER 3D =====
+RunService:Set3dRenderingEnabled(false)
+
+-- ===== CORE HIDE FUNCTION =====
+local function Hide(v)
+    if v:IsA("BasePart") then
+        v.Transparency = 1
+        v.CastShadow = false
+        v.Material = Enum.Material.Plastic
+        v.Reflectance = 0
+
+    elseif v:IsA("Decal") or v:IsA("Texture") then
+        v.Transparency = 1
+
+    elseif v:IsA("ParticleEmitter")
+        or v:IsA("Trail")
+        or v:IsA("Beam") then
+        v:Destroy()
+
+    elseif v:IsA("Light") then
+        v.Enabled = false
+
+    elseif v:IsA("Explosion") then
+        v.Visible = false
+        v.BlastPressure = 1 -- giữ damage
     end
-
-    game.Lighting.ChildAdded:Connect(function(v)
-        if v:IsA("SunRaysEffect") or v:IsA("ColorCorrectionEffect") or v:IsA("BloomEffect") or v:IsA("DepthOfFieldEffect") then
-            v.Enabled = false
-        end
-    end)
 end
-Akicho()
+
+-- ===== NUKE MAP + SKILL (1 LẦN) =====
+for _,v in ipairs(Workspace:GetDescendants()) do
+    Hide(v)
+end
+
+-- ===== SPAWN SAU =====
+Workspace.DescendantAdded:Connect(Hide)
+
+-- ===== ẨN PLAYER KHÁC =====
+local function HideCharacter(char)
+    for _,v in ipairs(char:GetDescendants()) do
+        Hide(v)
+    end
+end
+
+for _,plr in ipairs(Players:GetPlayers()) do
+    if plr ~= LocalPlayer then
+        if plr.Character then
+            HideCharacter(plr.Character)
+        end
+        plr.CharacterAdded:Connect(HideCharacter)
+    end
+end
+
+Players.PlayerAdded:Connect(function(plr)
+    if plr ~= LocalPlayer then
+        plr.CharacterAdded:Connect(HideCharacter)
+    end
+end)
+
+-- ===== LIGHTING OFF =====
+Lighting.GlobalShadows = false
+Lighting.FogEnd = 1e9
+Lighting.Brightness = 0
+
+for _,v in ipairs(Lighting:GetChildren()) do
+    if v:IsA("PostEffect") then
+        v.Enabled = false
+    end
+end
+
+Lighting.ChildAdded:Connect(function(v)
+    if v:IsA("PostEffect") then
+        v.Enabled = false
+    end
+end)
+
+-- ===== TERRAIN =====
+Terrain.WaterWaveSize = 0
+Terrain.WaterWaveSpeed = 0
+Terrain.WaterReflectance = 0
+Terrain.WaterTransparency = 1
+
+-- ===== WORKSPACE PERF =====
+Workspace.LevelOfDetail = Enum.ModelLevelOfDetail.Disabled
+Workspace.InterpolationThrottling = Enum.InterpolationThrottlingMode.Enabled
+Workspace.ClientAnimatorThrottling = Enum.ClientAnimatorThrottlingMode.Enabled
+-- ==============================================
